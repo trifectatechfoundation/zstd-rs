@@ -51,6 +51,27 @@ use core::ops::{Deref, DerefMut};
 use core::ptr::NonNull;
 use core::str;
 
+#[macro_export]
+macro_rules! cfg_select {
+    ({ $($tt:tt)* }) => {{
+        $crate::cfg_select! { $($tt)* }
+    }};
+    (_ => { $($output:tt)* }) => {
+        $($output)*
+    };
+    (
+        $cfg:meta => $output:tt
+        $($( $rest:tt )+)?
+    ) => {
+        #[cfg($cfg)]
+        $crate::cfg_select! { _ => $output }
+        $(
+            #[cfg(not($cfg))]
+            $crate::cfg_select! { $($rest)+ }
+        )?
+    }
+}
+
 include!("constants.rs");
 
 #[cfg(feature = "experimental")]
@@ -602,31 +623,78 @@ impl<'a> CCtx<'a> {
     ///
     /// Some of these parameters need to be set during de-compression as well.
     pub fn set_parameter(&mut self, param: CParameter) -> SafeResult {
-        // TODO: Until bindgen properly generates a binding for this, we'll need to do it here.
+        #[rustfmt::skip]
+        #[allow(non_upper_case_globals, unused)]
+        mod helper {
+            use zstd_sys::ZSTD_cParameter;
 
-        #[cfg(feature = "experimental")]
-        use zstd_sys::ZSTD_cParameter::{
-            ZSTD_c_experimentalParam1 as ZSTD_c_rsyncable,
-            ZSTD_c_experimentalParam10 as ZSTD_c_stableOutBuffer,
-            ZSTD_c_experimentalParam11 as ZSTD_c_blockDelimiters,
-            ZSTD_c_experimentalParam12 as ZSTD_c_validateSequences,
-            ZSTD_c_experimentalParam13 as ZSTD_c_useBlockSplitter,
-            ZSTD_c_experimentalParam14 as ZSTD_c_useRowMatchFinder,
-            ZSTD_c_experimentalParam15 as ZSTD_c_deterministicRefPrefix,
-            ZSTD_c_experimentalParam16 as ZSTD_c_prefetchCDictTables,
-            ZSTD_c_experimentalParam17 as ZSTD_c_enableSeqProducerFallback,
-            ZSTD_c_experimentalParam18 as ZSTD_c_maxBlockSize,
-            ZSTD_c_experimentalParam19 as ZSTD_c_searchForExternalRepcodes,
-            ZSTD_c_experimentalParam2 as ZSTD_c_format,
-            ZSTD_c_experimentalParam3 as ZSTD_c_forceMaxWindow,
-            ZSTD_c_experimentalParam4 as ZSTD_c_forceAttachDict,
-            ZSTD_c_experimentalParam5 as ZSTD_c_literalCompressionMode,
-            ZSTD_c_experimentalParam7 as ZSTD_c_srcSizeHint,
-            ZSTD_c_experimentalParam8 as ZSTD_c_enableDedicatedDictSearch,
-            ZSTD_c_experimentalParam9 as ZSTD_c_stableInBuffer,
-        };
+            pub const ZSTD_c_chainLog: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_chainLog;
+            pub const ZSTD_c_checksumFlag: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_checksumFlag;
+            pub const ZSTD_c_compressionLevel: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_compressionLevel;
+            pub const ZSTD_c_contentSizeFlag: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_contentSizeFlag;
+            pub const ZSTD_c_dictIDFlag: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_dictIDFlag;
+            pub const ZSTD_c_enableLongDistanceMatching: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_enableLongDistanceMatching;
+            pub const ZSTD_c_experimentalParam1: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam1;
+            pub const ZSTD_c_experimentalParam10: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam10;
+            pub const ZSTD_c_experimentalParam11: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam11;
+            pub const ZSTD_c_experimentalParam12: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam12;
+            pub const ZSTD_c_experimentalParam13: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam13;
+            pub const ZSTD_c_experimentalParam14: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam14;
+            pub const ZSTD_c_experimentalParam15: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam15;
+            pub const ZSTD_c_experimentalParam16: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam16;
+            pub const ZSTD_c_experimentalParam17: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam17;
+            pub const ZSTD_c_experimentalParam18: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam18;
+            pub const ZSTD_c_experimentalParam19: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam19;
+            pub const ZSTD_c_experimentalParam2: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam2;
+            pub const ZSTD_c_experimentalParam20: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam20;
+            pub const ZSTD_c_experimentalParam3: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam3;
+            pub const ZSTD_c_experimentalParam4: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam4;
+            pub const ZSTD_c_experimentalParam5: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam5;
+            pub const ZSTD_c_experimentalParam7: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam7;
+            pub const ZSTD_c_experimentalParam8: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam8;
+            pub const ZSTD_c_experimentalParam9: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_experimentalParam9;
+            pub const ZSTD_c_hashLog: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_hashLog;
+            pub const ZSTD_c_jobSize: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_jobSize;
+            pub const ZSTD_c_ldmBucketSizeLog: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_ldmBucketSizeLog;
+            pub const ZSTD_c_ldmHashLog: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_ldmHashLog;
+            pub const ZSTD_c_ldmHashRateLog: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_ldmHashRateLog;
+            pub const ZSTD_c_ldmMinMatch: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_ldmMinMatch;
+            pub const ZSTD_c_minMatch: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_minMatch;
+            pub const ZSTD_c_nbWorkers: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_nbWorkers;
+            pub const ZSTD_c_overlapLog: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_overlapLog;
+            pub const ZSTD_c_searchLog: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_searchLog;
+            pub const ZSTD_c_strategy: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_strategy;
+            pub const ZSTD_c_targetCBlockSize: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_targetCBlockSize;
+            pub const ZSTD_c_targetLength: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_targetLength;
+            pub const ZSTD_c_windowLog: ZSTD_cParameter = ZSTD_cParameter::ZSTD_c_windowLog;
 
-        use zstd_sys::ZSTD_cParameter::*;
+            cfg_select!(
+                feature = "experimental" => {
+                    pub const ZSTD_c_rsyncable: ZSTD_cParameter = ZSTD_c_experimentalParam1;
+                    pub const ZSTD_c_stableOutBuffer: ZSTD_cParameter = ZSTD_c_experimentalParam10;
+                    pub const ZSTD_c_blockDelimiters: ZSTD_cParameter = ZSTD_c_experimentalParam11;
+                    pub const ZSTD_c_validateSequences: ZSTD_cParameter = ZSTD_c_experimentalParam12;
+                    pub const ZSTD_c_useBlockSplitter: ZSTD_cParameter = ZSTD_c_experimentalParam13;
+                    pub const ZSTD_c_useRowMatchFinder: ZSTD_cParameter = ZSTD_c_experimentalParam14;
+                    pub const ZSTD_c_deterministicRefPrefix: ZSTD_cParameter = ZSTD_c_experimentalParam15;
+                    pub const ZSTD_c_prefetchCDictTables: ZSTD_cParameter = ZSTD_c_experimentalParam16;
+                    pub const ZSTD_c_enableSeqProducerFallback: ZSTD_cParameter = ZSTD_c_experimentalParam17;
+                    pub const ZSTD_c_maxBlockSize: ZSTD_cParameter = ZSTD_c_experimentalParam18;
+                    pub const ZSTD_c_searchForExternalRepcodes: ZSTD_cParameter = ZSTD_c_experimentalParam19;
+                    pub const ZSTD_c_format: ZSTD_cParameter = ZSTD_c_experimentalParam2;
+                    pub const ZSTD_c_forceMaxWindow: ZSTD_cParameter = ZSTD_c_experimentalParam3;
+                    pub const ZSTD_c_forceAttachDict: ZSTD_cParameter = ZSTD_c_experimentalParam4;
+                    pub const ZSTD_c_literalCompressionMode: ZSTD_cParameter = ZSTD_c_experimentalParam5;
+                    pub const ZSTD_c_srcSizeHint: ZSTD_cParameter = ZSTD_c_experimentalParam7;
+                    pub const ZSTD_c_enableDedicatedDictSearch: ZSTD_cParameter = ZSTD_c_experimentalParam8;
+                    pub const ZSTD_c_stableInBuffer: ZSTD_cParameter = ZSTD_c_experimentalParam9;
+                }
+
+                _ => {}
+            );
+        }
+
+        pub use helper::*;
         use CParameter::*;
 
         let (param, value) = match param {
@@ -1125,15 +1193,32 @@ impl<'a> DCtx<'a> {
 
     /// Sets a decompression parameter.
     pub fn set_parameter(&mut self, param: DParameter) -> SafeResult {
-        #[cfg(feature = "experimental")]
-        use zstd_sys::ZSTD_dParameter::{
-            ZSTD_d_experimentalParam1 as ZSTD_d_format,
-            ZSTD_d_experimentalParam2 as ZSTD_d_stableOutBuffer,
-            ZSTD_d_experimentalParam3 as ZSTD_d_forceIgnoreChecksum,
-            ZSTD_d_experimentalParam4 as ZSTD_d_refMultipleDDicts,
-        };
+        #[rustfmt::skip]
+        #[allow(unused, non_upper_case_globals)]
+        mod helper {
+            use zstd_sys::ZSTD_dParameter;
 
-        use zstd_sys::ZSTD_dParameter::*;
+            pub const ZSTD_d_windowLogMax: ZSTD_dParameter = ZSTD_dParameter::ZSTD_d_windowLogMax;
+            pub const ZSTD_d_experimentalParam1: ZSTD_dParameter = ZSTD_dParameter::ZSTD_d_experimentalParam1;
+            pub const ZSTD_d_experimentalParam2: ZSTD_dParameter = ZSTD_dParameter::ZSTD_d_experimentalParam2;
+            pub const ZSTD_d_experimentalParam3: ZSTD_dParameter = ZSTD_dParameter::ZSTD_d_experimentalParam3;
+            pub const ZSTD_d_experimentalParam4: ZSTD_dParameter = ZSTD_dParameter::ZSTD_d_experimentalParam4;
+            pub const ZSTD_d_experimentalParam5: ZSTD_dParameter = ZSTD_dParameter::ZSTD_d_experimentalParam5;
+            pub const ZSTD_d_experimentalParam6: ZSTD_dParameter = ZSTD_dParameter::ZSTD_d_experimentalParam6;
+
+            cfg_select!(
+                feature = "experimental" => {
+                    pub const ZSTD_d_format: ZSTD_dParameter = ZSTD_d_experimentalParam1;
+                    pub const ZSTD_d_stableOutBuffer: ZSTD_dParameter = ZSTD_d_experimentalParam2;
+                    pub const ZSTD_d_forceIgnoreChecksum: ZSTD_dParameter = ZSTD_d_experimentalParam3;
+                    pub const ZSTD_d_refMultipleDDicts: ZSTD_dParameter = ZSTD_d_experimentalParam4;
+                }
+
+                _ => {}
+            );
+        }
+
+        use helper::*;
         use DParameter::*;
 
         let (param, value) = match param {

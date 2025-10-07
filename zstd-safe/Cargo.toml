@@ -17,29 +17,31 @@ exclude = ["update_consts.sh"]
 features = ["experimental", "arrays", "std", "zdict_builder", "doc-cfg"]
 
 [dependencies]
-zstd-sys = { path = "zstd-sys", version = "2.0.15", default-features = false }
+# zstd-sys = { path = "zstd-sys", version = "2.0.15", default-features = false }
+zstd-sys = { git = "https://github.com/trifectatechfoundation/libzstd-rs-sys.git", rev = "edd8e07b9fe21e477848e9221efed2bd39e32013", package = "libzstd-rs-sys" }
 
 [features]
-default = ["legacy", "arrays", "zdict_builder"]
+default = ["legacy", "arrays", "zdict_builder", "libzstd-rs-sys"]
+libzstd-rs-sys = []
 
-bindgen = ["zstd-sys/bindgen"]
-debug = ["zstd-sys/debug"]
-experimental = ["zstd-sys/experimental"]
-legacy = ["zstd-sys/legacy"]
-pkg-config = ["zstd-sys/pkg-config"]
-std = ["zstd-sys/std"] # Implements WriteBuf for std types like Cursor and Vec.
-zstdmt = ["zstd-sys/zstdmt"]
-thin = ["zstd-sys/thin"]
+bindgen = []
+debug = []
+experimental = []
+legacy = []
+pkg-config = []
+std = [] # Implements WriteBuf for std types like Cursor and Vec.
+zstdmt = []
+thin = []
 arrays = []
-no_asm = ["zstd-sys/no_asm"]
+no_asm = []
 doc-cfg = []
-zdict_builder = ["zstd-sys/zdict_builder"]
-seekable = ["zstd-sys/seekable"]
+zdict_builder = []
+seekable = []
 
 # These two are for cross-language LTO.
 # Will only work if `clang` is used to build the C library.
-fat-lto = ["zstd-sys/fat-lto"]
-thin-lto = ["zstd-sys/thin-lto"]
+fat-lto = []
+thin-lto = []
 
 [lints.rust]
 non_upper_case_globals = "allow"
